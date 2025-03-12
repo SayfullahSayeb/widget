@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>বয়স ক্যালকুলেটর</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    .input-group {
+      flex: 1;
+      margin: 0 5px; /* Space between input fields */
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    p {
+      font-size: 18px;
+      margin-top: 15px;
+    }
+
+    .note {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>বয়স ক্যালকুলেটর</h1>
+    <div class="input-row">
+      <div class="input-group">
+        <label for="month">মাস</label>
+        <select id="month" onchange="populateDays()">
+          <option value="0">জানুয়ারি</option>
+          <option value="1">ফেব্রুয়ারি</option>
+          <option value="2">মার্চ</option>
+          <option value="3">এপ্রিল</option>
+          <option value="4">মে</option>
+          <option value="5">জুন</option>
+          <option value="6">জুলাই</option>
+          <option value="7">আগস্ট</option>
+          <option value="8">সেপ্টেম্বর</option>
+          <option value="9">অক্টোবর</option>
+          <option value="10">নভেম্বর</option>
+          <option value="11">ডিসেম্বর</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label for="day">তারিখ</label>
+        <select id="day">
+          <!-- Days dynamically populated -->
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label for="year">বছর</label>
+        <input type="text" id="year" placeholder="উদাহরণ: ২০০২">
+      </div>
+    </div>
+
+    <button onclick="calculateDifference()">গণনা করুন</button>
+    <p id="output"></p>
+
+    <div class="note">
+      <h3>বিঃদ্রঃ</h3>
+      <p>একজন ব্যক্তির বয়স বিভিন্ন সংস্কৃতিতে বিভিন্নভাবে গণনা করা হয়। এই ক্যালকুলেটরটি সবচেয়ে সাধারণ বয়স পদ্ধতির উপর ভিত্তি করে তৈরি করা হয়েছে। এই পদ্ধতিতে, জন্মদিনে বয়স বৃদ্ধি পায়। উদাহরণস্বরূপ, একজন ব্যক্তি যদি ৩ বছর এবং ১১ মাস বেঁচে থাকে, তবে তার বয়স হবে ৩ বছর এবং তার পরবর্তী জন্মদিনে ৪ বছর হবে। বেশিরভাগ পশ্চিমা দেশ এই পদ্ধতি অনুসরণ করে।</p>
+    </div>
+  </div>
+
+  <script>
+    // Populate days dropdown based on month and year
+    function populateDays() {
+      const month = document.getElementById('month').value;
+      const year = document.getElementById('year').value;
+      const dayDropdown = document.getElementById('day');
+
+      // Determine the number of days in the selected month
+      const daysInMonth = new Date(year || new Date().getFullYear(), parseInt(month) + 1, 0).getDate();
+
+      dayDropdown.innerHTML = ''; // Clear previous options
+      for (let i = 1; i <= daysInMonth; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        dayDropdown.appendChild(option);
+      }
+    }
+
+    function calculateDifference() {
+      const month = parseInt(document.getElementById('month').value);
+      const day = parseInt(document.getElementById('day').value);
+      const year = parseInt(document.getElementById('year').value);
+      const output = document.getElementById('output');
+
+      if (!year || isNaN(year)) {
+        output.textContent = 'অনুগ্রহ করে সঠিক বছর লিখুন!';
+        return;
+      }
+
+      const startDate = new Date(year, month, day);
+      const today = new Date();
+
+      let years = today.getFullYear() - startDate.getFullYear();
+      let months = today.getMonth() - startDate.getMonth();
+      let days = today.getDate() - startDate.getDate();
+
+      if (days < 0) {
+        months -= 1;
+        days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+      }
+      if (months < 0) {
+        years -= 1;
+        months += 12;
+      }
+
+      output.textContent = `আপনার বয়স: ${years} বছর, ${months} মাস, এবং ${days} দিন।`;
+    }
+
+    // Populate days on page load
+    populateDays();
+  </script>
+</body>
+            </html>
