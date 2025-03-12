@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>বয়স ক্যালকুলেটর</title>
+  <title>বয়স ক্যালকুলেটর</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,7 +31,7 @@
 
     .input-group {
       flex: 1;
-      margin: 0 5px; /* Space between input fields */
+      margin: 0 5px;
     }
 
     .input-group label {
@@ -60,9 +60,17 @@
       background-color: #0056b3;
     }
 
-    p {
-      font-size: 18px;
-      margin-top: 15px;
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      text-align: left;
+    }
+
+    .result p {
+      margin: 5px 0;
+      font-size: 16px;
     }
 
     .note {
@@ -75,7 +83,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>বয়স ক্যালকুলেটর</h1>
+    <h1>বয়স ক্যালকুলেটর</h1>
     <div class="input-row">
       <div class="input-group">
         <label for="month">মাস</label>
@@ -109,31 +117,51 @@
     </div>
 
     <button onclick="calculateDifference()">গণনা করুন</button>
-    <p id="output"></p>
+    <div id="output" class="result"></div>
 
     <div class="note">
       <h3>বিঃদ্রঃ</h3>
-      <p>একজন ব্যক্তির বয়স বিভিন্ন সংস্কৃতিতে বিভিন্নভাবে গণনা করা হয়। এই ক্যালকুলেটরটি সবচেয়ে সাধারণ বয়স পদ্ধতির উপর ভিত্তি করে তৈরি করা হয়েছে। এই পদ্ধতিতে, জন্মদিনে বয়স বৃদ্ধি পায়। উদাহরণস্বরূপ, একজন ব্যক্তি যদি ৩ বছর এবং ১১ মাস বেঁচে থাকে, তবে তার বয়স হবে ৩ বছর এবং তার পরবর্তী জন্মদিনে ৪ বছর হবে। বেশিরভাগ পশ্চিমা দেশ এই পদ্ধতি অনুসরণ করে।</p>
+      <p>একজন ব্যক্তির বয়স বিভিন্ন সংস্কৃতিতে বিভিন্নভাবে গণনা করা হয়। এই ক্যালকুলেটরটি সবচেয়ে সাধারণ বয়স পদ্ধতির উপর ভিত্তি করে তৈরি করা হয়েছে।</p>
     </div>
   </div>
 
   <script>
-    // Populate days dropdown based on month and year
+    const weekdays = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+    const months = ['জানুয়ারী', 'ফেব্রুয়ারী', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+
     function populateDays() {
       const month = document.getElementById('month').value;
       const year = document.getElementById('year').value;
       const dayDropdown = document.getElementById('day');
 
-      // Determine the number of days in the selected month
       const daysInMonth = new Date(year || new Date().getFullYear(), parseInt(month) + 1, 0).getDate();
 
-      dayDropdown.innerHTML = ''; // Clear previous options
+      dayDropdown.innerHTML = '';
       for (let i = 1; i <= daysInMonth; i++) {
         const option = document.createElement('option');
         option.value = i;
         option.textContent = i;
         dayDropdown.appendChild(option);
       }
+    }
+
+    function getNextBirthday(birthDate, today) {
+      let nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+      
+      if (today > nextBirthday) {
+        nextBirthday.setFullYear(today.getFullYear() + 1);
+      }
+      
+      return nextBirthday;
+    }
+
+    function getDaysBetween(date1, date2) {
+      const oneDay = 24 * 60 * 60 * 1000;
+      return Math.round((date2 - date1) / oneDay);
+    }
+
+    function formatDate(date) {
+      return `${weekdays[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     }
 
     function calculateDifference() {
@@ -143,16 +171,17 @@
       const output = document.getElementById('output');
 
       if (!year || isNaN(year)) {
-        output.textContent = 'অনুগ্রহ করে সঠিক বছর লিখুন!';
+        output.innerHTML = 'অনুগ্রহ করে সঠিক বছর লিখুন!';
         return;
       }
 
-      const startDate = new Date(year, month, day);
+      const birthDate = new Date(year, month, day);
       const today = new Date();
+      const nextBirthday = getNextBirthday(birthDate, today);
 
-      let years = today.getFullYear() - startDate.getFullYear();
-      let months = today.getMonth() - startDate.getMonth();
-      let days = today.getDate() - startDate.getDate();
+      let years = today.getFullYear() - birthDate.getFullYear();
+      let months = today.getMonth() - birthDate.getMonth();
+      let days = today.getDate() - birthDate.getDate();
 
       if (days < 0) {
         months -= 1;
@@ -163,11 +192,20 @@
         months += 12;
       }
 
-      output.textContent = `আপনার বয়স: ${years} বছর, ${months} মাস, ${days} দিন।`;
+      const daysUntilNextBirthday = getDaysBetween(today, nextBirthday);
+
+      let resultHTML = `
+        <p><b>আপনার বয়স:</b> ${years} বছর, ${months} মাস, ${days} দিন</p> <br>
+        <p><b>জন্ম তারিখ:</b> ${formatDate(birthDate)}</p>
+        <p><b>বর্তমান তারিখ:</b> ${formatDate(today)}</p><br>
+        <p><b>পরবর্তী জন্মদিন:</b> ${formatDate(nextBirthday)}, পরবর্তী জন্মদিনে বাকি ${daysUntilNextBirthday} দিন</p>
+      `;
+
+      output.innerHTML = resultHTML;
     }
 
     // Populate days on page load
     populateDays();
   </script>
 </body>
-            </html>
+</html>
