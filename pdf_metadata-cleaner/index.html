@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Metadata Cleaner</title>
+  <!-- We load pdf.js (for metadata preview) and pdf-lib -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gray-50">
+  <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        PDF Metadata Cleaner
+      </h1>
+      <p class="text-gray-600">
+        Remove all metadata from your PDF files securely
+      </p>
+    </div>
+
+    <div id="dropZone"
+      class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors duration-200 mb-6">
+      <div class="space-y-4">
+        <div id="uploadIcon" class="mx-auto w-16 h-16 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+        <div class="text-gray-600">
+          <span class="font-medium">Drop your PDF here</span> <br>or<br>
+          <label class="text-blue-500 hover:text-blue-600 cursor-pointer">
+            <label
+              class="border-2 border-blue-500 hover:border-blue-600 text-gray-700 py-2 px-2 rounded cursor-pointer mt-2 inline-block">
+              Choose files
+              <input type="file" class="hidden" id="fileInput" accept=".pdf" />
+            </label>
+        </div>
+        <p class="text-sm text-gray-500">Maximum file size: 10MB</p>
+      </div>
+    </div>
+
+    <!-- File Preview -->
+    <div id="filePreview" class="hidden bg-white rounded-lg shadow p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-3">
+          <svg class="w-8 h-8 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <div>
+            <h3 id="fileName" class="font-medium text-gray-900"></h3>
+            <p id="fileSize" class="text-sm text-gray-500"></p>
+          </div>
+        </div>
+        <button id="removeFile" class="text-gray-400 hover:text-gray-500">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Metadata Preview -->
+      <div id="metadataPreview" class="bg-gray-50 rounded p-4 text-sm">
+        <h4 class="font-medium text-gray-900 mb-2">Current Metadata:</h4>
+        <div id="metadataList" class="space-y-1 text-gray-600"></div>
+      </div>
+    </div>
+
+    <div class="flex justify-center space-x-4">
+      <button id="cleanButton"
+        class="hidden bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+        Clean & Download PDF
+      </button>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 text-center">
+        <div class="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4">
+        </div>
+        <p class="text-gray-900">Processing your PDF...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Destructure PDFName from pdf-lib for low-level operations.
+    const { PDFName } = PDFLib;
+
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const filePreview = document.getElementById("filePreview");
+    const fileName = document.getElementById("fileName");
+    const fileSize = document.getElementById("fileSize");
+    const removeFile = document.getElementById("removeFile");
+    const cleanButton = document.getElementById("cleanButton");
+    const processingOverlay = document.getElementById("processingOverlay");
+    const metadataList = document.getElementById("metadataList");
+    let currentFile = null;
+
+    // Drag and drop handlers
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("border-blue-500");
+    });
+
+    dropZone.addEventListener("dragleave", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("border-blue-500");
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("border-blue-500");
+      handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      handleFile(e.target.files[0]);
+    });
+
+    removeFile.addEventListener("click", () => {
+      resetUI();
+    });
+
+    function handleFile(file) {
+      if (!file || file.type !== "application/pdf") {
+        alert("Please upload a valid PDF file.");
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size must be less than 10MB.");
+        return;
+      }
+
+      currentFile = file;
+      displayFileInfo(file);
+      displayMetadata(file);
+      filePreview.classList.remove("hidden");
+      cleanButton.classList.remove("hidden");
+    }
+
+    function displayFileInfo(file) {
+      fileName.textContent = file.name;
+      fileSize.textContent = formatFileSize(file.size);
+    }
+
+    async function displayMetadata(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+
+      // Extract metadata using PDF.js
+      const metadata = await pdf.getMetadata();
+      const info = metadata.info;
+
+      // Check if metadata is available
+      if (!info) {
+        alert('No metadata found.');
+        return;
+      }
+
+      // Format Creation and Modification Dates
+      const creationDate = formatDate(info.CreationDate);
+      const modDate = formatDate(info.ModDate);
+
+      // Dynamically build metadata fields
+      let metadataHTML = '';
+
+      // Only display fields that exist
+      metadataHTML += info.Title ? `<p><strong>Title:</strong> ${info.Title}</p>` : '';
+      metadataHTML += info.Author ? `<p><strong>Author:</strong> ${info.Author}</p>` : '';
+      metadataHTML += info.Subject ? `<p><strong>Subject:</strong> ${info.Subject}</p>` : '';
+      metadataHTML += info.Keywords ? `<p><strong>Keywords:</strong> ${info.Keywords}</p>` : '';
+      metadataHTML += info.Creator ? `<p><strong>Creator:</strong> ${info.Creator}</p>` : '';
+      metadataHTML += info.Producer ? `<p><strong>Producer:</strong> ${info.Producer}</p>` : '';
+      metadataHTML += creationDate ? `<p><strong>Creation Date:</strong> ${creationDate}</p>` : '';
+      metadataHTML += modDate ? `<p><strong>Modification Date:</strong> ${modDate}</p>` : '';
+      metadataHTML += metadata.isTagged ? `<p><strong>Tagged:</strong> Yes</p>` : '';
+      metadataHTML += `<p><strong>User Properties:</strong> No</p>`;
+      metadataHTML += `<p><strong>Suspects:</strong> No</p>`;
+      metadataHTML += `<p><strong>Form:</strong> No</p>`;
+      metadataHTML += info.hasJavaScript ? `<p><strong>JavaScript:</strong> Yes</p>` : '';
+      metadataHTML += pdf.numPages ? `<p><strong>Pages:</strong> ${pdf.numPages}</p>` : '';
+      metadataHTML += pdf.encrypted ? `<p><strong>Encrypted:</strong> Yes</p>` : `<p><strong>Encrypted:</strong> No</p>`;
+
+      // Add Page Size (if available)
+      const pageSize = pdf.pageSize ? `${pdf.pageSize[0]} x ${pdf.pageSize[1]} pts (A4)` : 'Not available';
+      metadataHTML += `<p><strong>Page Size:</strong> ${pageSize}</p>`;
+
+      // Add File Size
+      const fileSize = formatFileSize(file.size);
+      metadataHTML += `<p><strong>File Size:</strong> ${fileSize}</p>`;
+
+      // Add PDF Version
+      metadataHTML += pdf.pdfVersion ? `<p><strong>PDF Version:</strong> ${pdf.pdfVersion}</p>` : '';
+
+      // Inject the dynamically generated HTML into the metadata list
+      metadataList.innerHTML = metadataHTML;
+    }
+
+    function formatFileSize(size) {
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let unitIndex = 0;
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+      }
+      return `${size.toFixed(2)} ${units[unitIndex]}`;
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return null;
+      // PDF date format: D:YYYYMMDDHHmmSS
+      const match = dateString.match(/^D:(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/);
+      if (!match) return null;
+      const [_, year, month, day, hour, minute, second] = match;
+      const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+      return date.toUTCString();
+    }
+
+    // Clean & Download: Remove metadata keys completely from the PDF Info dictionary.
+    cleanButton.addEventListener("click", async () => {
+      if (!currentFile) return;
+      processingOverlay.classList.remove("hidden");
+
+      try {
+        const arrayBuffer = await currentFile.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+        // Access the Info dictionary reference from the trailer.
+        const infoRef = pdfDoc.context.trailerInfo.Info;
+        if (infoRef) {
+          const infoDict = pdfDoc.context.lookup(infoRef);
+          // Delete the metadata keys entirely.
+          infoDict.delete(PDFName.of("Title"));
+          infoDict.delete(PDFName.of("Author"));
+          infoDict.delete(PDFName.of("Subject"));
+          infoDict.delete(PDFName.of("Keywords"));
+          infoDict.delete(PDFName.of("Creator"));
+          infoDict.delete(PDFName.of("Producer"));
+          infoDict.delete(PDFName.of("CreationDate"));
+          infoDict.delete(PDFName.of("ModDate"));
+        }
+
+        // Save the cleaned PDF
+        const cleanedPdfBytes = await pdfDoc.save();
+        downloadCleanedPDF(cleanedPdfBytes);
+      } catch (error) {
+        alert("Error processing PDF. Please try again.");
+        console.error(error);
+      } finally {
+        processingOverlay.classList.add("hidden");
+      }
+    });
+
+    function downloadCleanedPDF(pdfBytes) {
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      // Get the original file name (without the path)
+      const originalFileName = currentFile.name;
+
+      // Get the file extension (e.g., '.pdf')
+      const fileExtension = originalFileName.substring(originalFileName.lastIndexOf('.'));
+
+      // Get the base name (file name without the extension)
+      let baseName = originalFileName.substring(0, originalFileName.lastIndexOf('.'));
+
+      // Check if a file with the same name exists already and append (1) to the name if needed
+      let downloadFileName = originalFileName;
+      let counter = 1;
+
+      // Loop to check if file with same name exists
+      while (document.querySelector(`a[download="${downloadFileName}"]`)) {
+        downloadFileName = `${baseName}(${counter})${fileExtension}`;
+        counter++;
+      }
+
+      // Set the download file name
+      link.download = downloadFileName;
+
+      // Trigger the download
+      document.body.appendChild(link);
+      link.href = url;
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+  </script>
+</body>
+
+</html>
