@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Lorem Ipsum Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="bg-gray-900">
+    <div class="min-h-screen p-4 md:p-8">
+        <!-- Header -->
+        <header class="max-w-6xl mx-auto text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Lorem Ipsum Generator</h1>
+            <p class="text-gray-300">Generate beautiful placeholder text for your projects</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Controls -->
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-gray-200 font-medium mb-2">Type</label>
+                            <select id="type" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200">
+                                <option value="words">Words</option>
+                                <option value="sentences">Sentences</option>
+                                <option value="paragraphs">Paragraphs</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-200 font-medium mb-2">Amount</label>
+                            <input type="number" id="amount" min="1" max="100" value="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-200 font-medium mb-2">Style</label>
+                            <select id="style" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-gray-200">
+                                <option value="classic">Classic Latin</option>
+                                <option value="pseudo">Pseudo-Latin</option>
+                                <option value="hipster">Hipster Ipsum</option>
+                                <option value="tech">Tech Ipsum</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output -->
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="block text-gray-200 font-medium">Generated Text</label>
+                        <button id="copy" class="bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg transition-colors">
+                            Copy to Clipboard
+                        </button>
+                    </div>
+                    
+                    <!-- Output box with scrollbar -->
+                    <div class="relative bg-gray-700 rounded-lg p-4 h-[400px]">
+                        <div id="output" class="text-gray-300 whitespace-pre-wrap h-full overflow-y-auto pr-4 scrollbar-custom"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Text data
+        const textData = {
+            classic: {
+                words: ["lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscing", "elit"],
+                sentences: [
+                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                    "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                    "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."
+                ]
+            },
+            pseudo: {
+                words: ["velit", "esse", "cillum", "dolore", "eu", "fugiat", "nulla", "pariatur"],
+                sentences: [
+                    "Velit esse cillum dolore eu fugiat nulla pariatur.",
+                    "Excepteur sint occaecat cupidatat non proident.",
+                    "Sunt in culpa qui officia deserunt mollit anim id est laborum."
+                ]
+            },
+            hipster: {
+                words: ["artisan", "craft", "beard", "vinyl", "organic", "sustainable", "authentic", "minimal"],
+                sentences: [
+                    "Portland artisan craft beer sustainable authentic minimal design.",
+                    "Farm-to-table organic coffee vinyl records aesthetic meditation.",
+                    "Ethical cornhole street art selvage biodiesel kombucha."
+                ]
+            },
+            tech: {
+                words: ["algorithm", "blockchain", "cloud", "data", "encryption", "framework", "git", "hosting"],
+                sentences: [
+                    "Implementing blockchain solutions with distributed systems.",
+                    "Cloud-native microservices architecture deployment strategy.",
+                    "DevOps pipeline optimization using containerization."
+                ]
+            }
+        };
+
+        // Generate text based on user input
+        function generateText() {
+            const type = document.getElementById('type').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            const style = document.getElementById('style').value;
+            let result = '';
+
+            if (type === 'words') {
+                const words = textData[style].words;
+                for (let i = 0; i < amount; i++) {
+                    result += words[Math.floor(Math.random() * words.length)] + ' ';
+                }
+            } else if (type === 'sentences') {
+                const sentences = textData[style].sentences;
+                for (let i = 0; i < amount; i++) {
+                    result += sentences[Math.floor(Math.random() * sentences.length)] + ' ';
+                }
+            } else {
+                const sentences = textData[style].sentences;
+                for (let i = 0; i < amount; i++) {
+                    const paragraphLength = Math.floor(Math.random() * 3) + 3;
+                    for (let j = 0; j < paragraphLength; j++) {
+                        result += sentences[Math.floor(Math.random() * sentences.length)] + ' ';
+                    }
+                    result += '\n\n';
+                }
+            }
+
+            document.getElementById('output').textContent = result.trim();
+            
+            // Add animation
+            document.getElementById('output').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('output').classList.remove('opacity-0');
+            }, 50);
+        }
+
+        // Copy to clipboard
+        document.getElementById('copy').addEventListener('click', () => {
+            const output = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(output).then(() => {
+                const button = document.getElementById('copy');
+                button.textContent = 'Copied!';
+                button.classList.add('bg-green-800', 'text-green-200');
+                setTimeout(() => {
+                    button.textContent = 'Copy to Clipboard';
+                    button.classList.remove('bg-green-800', 'text-green-200');
+                }, 2000);
+            });
+        });
+
+        // Add event listeners for auto-generation
+        ['type', 'amount', 'style'].forEach(id => {
+            document.getElementById(id).addEventListener('change', generateText);
+            document.getElementById(id).addEventListener('input', generateText);
+        });
+
+        // Generate initial text
+        generateText();
+
+        // Add smooth transitions
+        document.querySelectorAll('select, input').forEach(element => {
+            element.classList.add('transition-all', 'duration-200');
+        });
+    </script>
+
+    <style>
+        #output {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .opacity-0 {
+            opacity: 0;
+        }
+        
+        /* Custom scrollbar styles */
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: #374151;
+            border-radius: 4px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</body>
+</html>
