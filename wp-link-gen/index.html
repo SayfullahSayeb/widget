@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Link Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInSlideUp 0.5s forwards ease-out;
+        }
+        .chat-bubble.sent {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        @keyframes fadeInSlideUp {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .copy-button-animation {
+            animation: bounceScale 0.3s ease-in-out;
+        }
+        @keyframes bounceScale {
+            0% { transform: scale(1);}
+            50% { transform: scale(1.05);}
+            100% { transform: scale(1);}
+        }
+        .chat-area::-webkit-scrollbar { width: 6px;}
+        .chat-area::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px;}
+        .chat-area::-webkit-scrollbar-thumb { background: #888; border-radius: 10px;}
+        .chat-area::-webkit-scrollbar-thumb:hover { background: #555;}
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-height: 70vh;
+            overflow-y: auto;
+            width: 95%;
+            max-width: 320px;
+            position: relative;
+        }
+        .country-list-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .country-list-item:hover {
+            background-color: #f0f2f5;
+        }
+        .country-list-item img {
+            width: 22px;
+            height: 15px;
+            margin-right: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+        }
+        /* Responsive WhatsApp preview box */
+        @media (max-width: 500px) {
+            .wa-preview-mobile {
+                width: 100vw !important;
+                min-width: 0 !important;
+                max-width: 100vw !important;
+                height: 90vh !important;
+                min-height: 400px !important;
+                border-radius: 1.2rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <h1 class="text-3xl md:text-4xl font-semibold text-gray-800 mb-8 text-center">Create your free link here</h1>
+
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-8 w-full max-w-6xl">
+
+        <!-- Left Section: Input Fields -->
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg w-full md:w-1/2 flex flex-col space-y-6">
+            <div>
+                <label for="phoneNumber" class="block text-gray-700 font-medium mb-2">Type your WhatsApp phone number</label>
+                <div class="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-all duration-200">
+                    <span id="countryCodeSelector" class="flex items-center pl-3 pr-2 border-r border-gray-300 text-gray-600 cursor-pointer hover:bg-gray-100 rounded-l-lg transition-colors duration-150">
+                        <img id="countryFlag" src="https://flagcdn.com/w40/bd.png" alt="Flag" class="w-6 h-4 mr-2 rounded-sm border border-gray-200">
+                        <span id="countryCode">+880</span>
+                    </span>
+                    <input
+                        type="tel"
+                        id="phoneNumber"
+                        class="flex-1 p-3 outline-none rounded-r-lg text-gray-800 placeholder-gray-400"
+                        placeholder="Your phone number here"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                    >
+                </div>
+                <p class="text-sm text-gray-500 mt-1">Remember to check your country code</p>
+            </div>
+
+            <div>
+                <label for="customMessage" class="block text-gray-700 font-medium mb-2">Custom message</label>
+                <textarea
+                    id="customMessage"
+                    rows="4"
+                    class="w-full p-3 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 text-gray-800 placeholder-gray-400"
+                    placeholder="Add a custom message that users will send to you"
+                ></textarea>
+                <p class="text-sm text-gray-500 mt-1">Example: "Hello, I want more info about the product"</p>
+            </div>
+
+            <button id="copyLinkBtn" class="w-full bg-gray-200 text-gray-800 font-semibold py-3 rounded-lg shadow-sm hover:bg-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75">
+                Copy Link
+            </button>
+
+            <div class="text-center text-gray-500 my-2">- or -</div>
+
+            <button id="openWhatsappBtn" class="w-full bg-emerald-500 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-emerald-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-opacity-75 flex items-center justify-center">
+                <i class="fab fa-whatsapp text-xl mr-2"></i> Open in whatsapp
+            </button>
+        </div>
+
+        <!-- Right Section: WhatsApp Preview -->
+        <div class="bg-white flex flex-col relative mx-auto border-2 border-gray-200 rounded-[2.2rem] shadow-xl wa-preview-mobile"
+             style="width:370px; height:720px; min-width:320px;">
+            <!-- Notch -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-4 bg-gray-200 rounded-b-lg z-10"></div>
+            <!-- Header -->
+            <div class="bg-emerald-600 text-white p-4 flex items-center rounded-t-2xl relative z-0">
+                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-user text-gray-600"></i>
+                </div>
+                <div class="flex-1">
+                    <p id="previewNumber" class="font-medium text-lg">+880</p>
+                    <p class="text-xs text-emerald-100">online</p>
+                </div>
+                <i class="fas fa-ellipsis-v text-xl ml-auto"></i>
+            </div>
+            <!-- Chat Area -->
+            <div id="chatArea" class="flex-1 p-4 overflow-y-auto flex flex-col bg-gray-50 chat-area" style="min-height:0;">
+                <!-- Message will be inserted here by JS -->
+            </div>
+            <!-- WhatsApp Input Bar -->
+            <div class="bg-white p-3 flex items-center border-t border-gray-200 rounded-b-2xl mt-auto gap-2" style="min-height:56px;">
+                <i class="far fa-smile text-gray-500 text-xl mr-1 shrink-0"></i>
+                <input type="text" placeholder="Type a message"
+                       class="flex-1 p-2 rounded-full bg-gray-100 border border-gray-200 text-sm outline-none placeholder-gray-400 max-w-[180px]" disabled>
+                <i class="fas fa-paperclip text-gray-500 text-xl mx-1 shrink-0"></i>
+                <i class="fas fa-camera text-gray-500 text-xl mx-1 shrink-0"></i>
+                <div class="bg-emerald-500 w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+                    <i class="fas fa-microphone text-white text-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box for alerts -->
+    <div id="messageBox" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
+            <h3 id="messageBoxTitle" class="text-xl font-semibold mb-4"></h3>
+            <p id="messageBoxContent" class="text-gray-700 mb-6"></p>
+            <button id="messageBoxCloseBtn" class="bg-emerald-500 text-white px-6 py-2 rounded-lg hover:bg-emerald-600 transition-colors duration-200">OK</button>
+        </div>
+    </div>
+
+    <!-- Country Code Selection Modal -->
+    <div id="countryModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-semibold mb-3 text-gray-800">Select Country Code</h2>
+            <div id="countryList" class="space-y-1">
+                <!-- Country list will be populated here by JS -->
+            </div>
+            <button id="closeCountryModal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        const phoneNumberInput = document.getElementById('phoneNumber');
+        const customMessageInput = document.getElementById('customMessage');
+        const previewNumber = document.getElementById('previewNumber');
+        const chatArea = document.getElementById('chatArea');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const openWhatsappBtn = document.getElementById('openWhatsappBtn');
+        const countryCodeSelector = document.getElementById('countryCodeSelector');
+        const countryFlag = document.getElementById('countryFlag');
+        const countryCodeSpan = document.getElementById('countryCode');
+
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxTitle = document.getElementById('messageBoxTitle');
+        const messageBoxContent = document.getElementById('messageBoxContent');
+        const messageBoxCloseBtn = document.getElementById('messageBoxCloseBtn');
+
+        const countryModal = document.getElementById('countryModal');
+        const countryList = document.getElementById('countryList');
+        const closeCountryModalBtn = document.getElementById('closeCountryModal');
+
+        // Define a list of countries and their codes/flags
+        const countries = [
+            { name: "Bangladesh", code: "+880", flag: "https://flagcdn.com/w40/bd.png" },
+            { name: "India", code: "+91", flag: "https://flagcdn.com/w40/in.png" },
+            { name: "Pakistan", code: "+92", flag: "https://flagcdn.com/w40/pk.png" },
+            { name: "United States", code: "+1", flag: "https://flagcdn.com/w40/us.png" },
+            { name: "United Kingdom", code: "+44", flag: "https://flagcdn.com/w40/gb.png" },
+            { name: "Saudi Arabia", code: "+966", flag: "https://flagcdn.com/w40/sa.png" },
+            { name: "Malaysia", code: "+60", flag: "https://flagcdn.com/w40/my.png" },
+            { name: "Indonesia", code: "+62", flag: "https://flagcdn.com/w40/id.png" },
+            { name: "Brazil", code: "+55", flag: "https://flagcdn.com/w40/br.png" },
+            { name: "Nigeria", code: "+234", flag: "https://flagcdn.com/w40/ng.png" },
+            { name: "Philippines", code: "+63", flag: "https://flagcdn.com/w40/ph.png" },
+            { name: "Turkey", code: "+90", flag: "https://flagcdn.com/w40/tr.png" },
+            { name: "Russia", code: "+7", flag: "https://flagcdn.com/w40/ru.png" },
+            { name: "Egypt", code: "+20", flag: "https://flagcdn.com/w40/eg.png" },
+            { name: "Germany", code: "+49", flag: "https://flagcdn.com/w40/de.png" },
+            { name: "France", code: "+33", flag: "https://flagcdn.com/w40/fr.png" },
+            { name: "Italy", code: "+39", flag: "https://flagcdn.com/w40/it.png" },
+            { name: "Spain", code: "+34", flag: "https://flagcdn.com/w40/es.png" },
+            { name: "South Africa", code: "+27", flag: "https://flagcdn.com/w40/za.png" },
+            { name: "Canada", code: "+1", flag: "https://flagcdn.com/w40/ca.png" }
+        ];
+        let currentCountryIndex = 0; // Default to Bangladesh
+
+        function showMessageBox(title, message) {
+            messageBoxTitle.textContent = title;
+            messageBoxContent.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+        messageBoxCloseBtn.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+        });
+
+        function generateWhatsAppLink() {
+            const number = phoneNumberInput.value.replace(/[^0-9]/g, '');
+            const message = encodeURIComponent(customMessageInput.value);
+            const selectedCountryCode = countries[currentCountryIndex].code.replace('+', '');
+            return `https://wa.me/${selectedCountryCode}${number}${message ? '?text=' + message : ''}`;
+        }
+
+        function updatePreview() {
+            const number = phoneNumberInput.value;
+            const message = customMessageInput.value;
+            const selectedCountry = countries[currentCountryIndex];
+
+            previewNumber.textContent = `${selectedCountry.code} ${number}`;
+            countryFlag.src = selectedCountry.flag;
+            countryCodeSpan.textContent = selectedCountry.code;
+
+            chatArea.innerHTML = '';
+            if (message.trim() !== '') {
+                const messageBubble = document.createElement('div');
+                messageBubble.classList.add('chat-bubble', 'sent');
+                messageBubble.textContent = message;
+                chatArea.appendChild(messageBubble);
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+        }
+
+        function renderCountryList() {
+            countryList.innerHTML = '';
+            countries.forEach((country, index) => {
+                const countryItem = document.createElement('div');
+                countryItem.classList.add('country-list-item');
+                countryItem.dataset.index = index;
+
+                const flagImg = document.createElement('img');
+                flagImg.src = country.flag;
+                flagImg.alt = country.name + ' Flag';
+                flagImg.onerror = function() { this.src = 'https://placehold.co/24x16/cccccc/333333?text=?'; };
+
+                const countryName = document.createElement('span');
+                countryName.textContent = country.name;
+                countryName.classList.add('flex-1', 'text-gray-700', 'ml-1');
+
+                const countryCode = document.createElement('span');
+                countryCode.textContent = country.code;
+                countryCode.classList.add('text-gray-500', 'font-medium', 'ml-2');
+
+                countryItem.appendChild(flagImg);
+                countryItem.appendChild(countryName);
+                countryItem.appendChild(countryCode);
+
+                countryList.appendChild(countryItem);
+            });
+        }
+
+        countryList.addEventListener('click', (event) => {
+            const selectedItem = event.target.closest('.country-list-item');
+            if (selectedItem) {
+                currentCountryIndex = parseInt(selectedItem.dataset.index);
+                phoneNumberInput.value = '';
+                updatePreview();
+                countryModal.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const defaultCountry = countries.find(c => c.code === '+880');
+            if (defaultCountry) {
+                currentCountryIndex = countries.indexOf(defaultCountry);
+            } else {
+                currentCountryIndex = 0;
+            }
+            updatePreview();
+            renderCountryList();
+        });
+
+        phoneNumberInput.addEventListener('input', updatePreview);
+        customMessageInput.addEventListener('input', updatePreview);
+
+        countryCodeSelector.addEventListener('click', () => {
+            countryModal.classList.remove('hidden');
+        });
+        closeCountryModalBtn.addEventListener('click', () => {
+            countryModal.classList.add('hidden');
+        });
+        countryModal.addEventListener('click', (event) => {
+            if (event.target === countryModal) {
+                countryModal.classList.add('hidden');
+            }
+        });
+
+        copyLinkBtn.addEventListener('click', () => {
+            const link = generateWhatsAppLink();
+            navigator.clipboard.writeText(link)
+                .then(() => {
+                    showMessageBox('Link Copied!', 'The WhatsApp link has been copied to your clipboard.');
+                    copyLinkBtn.classList.add('copy-button-animation');
+                    setTimeout(() => {
+                        copyLinkBtn.classList.remove('copy-button-animation');
+                    }, 300);
+                })
+                .catch(err => {
+                    showMessageBox('Copy Failed!', 'Could not copy the link. Please try again or copy manually: ' + link);
+                });
+        });
+
+        openWhatsappBtn.addEventListener('click', () => {
+            const link = generateWhatsAppLink();
+            window.open(link, '_blank');
+        });
+    </script>
+</body>
+</html>
