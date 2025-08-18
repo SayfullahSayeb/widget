@@ -141,7 +141,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>🖨️ Text Printer Tool</h1>
+    <h1>Print your Text</h1>
 
     <input type="text" id="textInput" placeholder="Type your text here...">
 
@@ -156,8 +156,8 @@
     <input type="number" id="customCount" placeholder="Enter custom number" min="1" style="display:none;">
 
     <div class="actions">
-      <button class="btn btn-primary" onclick="printText()">🖨️ Print</button>
-      <button class="btn btn-secondary" onclick="clearText()">🗑 Clear</button>
+      <button class="btn btn-primary" onclick="printText()">Print</button>
+      <button class="btn btn-secondary" onclick="clearText()">Clear</button>
     </div>
 
     <div class="output" id="outputBox">
@@ -165,7 +165,7 @@
     </div>
 
     <div class="output-buttons">
-      <button class="btn btn-secondary" onclick="copyText()">📋 Copy</button>
+      <button class="btn btn-secondary" onclick="copyText()">Copy</button>
       <button class="btn btn-primary" onclick="downloadText()">⬇ Download</button>
     </div>
   </div>
@@ -221,7 +221,7 @@
         return;
       }
       navigator.clipboard.writeText(output).then(() => {
-        alert("✅ Text copied to clipboard!");
+        alert("Text copied to clipboard!");
       });
     }
 
