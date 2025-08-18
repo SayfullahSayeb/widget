@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Text Printer Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* ===== General Reset ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(145deg, #1c1c1e, #2c2c2e);
+      color: #f2f2f7;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* ===== Card Container ===== */
+    .container {
+      background: #2c2c2e;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      padding: 25px;
+      max-width: 500px;
+      width: 100%;
+      animation: fadeIn 0.6s ease;
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: 600;
+      font-size: 22px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    /* ===== Inputs ===== */
+    input, select {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      border-radius: 12px;
+      border: 1px solid #3a3a3c;
+      background: #1c1c1e;
+      color: #f2f2f7;
+      font-size: 16px;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+
+    input:focus, select:focus {
+      border-color: #0a84ff;
+      box-shadow: 0 0 10px rgba(10,132,255,0.5);
+      outline: none;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      width: 48%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn-primary {
+      background: #0a84ff;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #007aff;
+    }
+
+    .btn-secondary {
+      background: #3a3a3c;
+      color: #f2f2f7;
+    }
+
+    .btn-secondary:hover {
+      background: #48484a;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      gap: 10px;
+    }
+
+    /* ===== Output Box ===== */
+    .output {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #1c1c1e;
+      border: 1px solid #3a3a3c;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+
+    .output-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .output-buttons .btn {
+      width: 48%;
+    }
+
+    /* ===== Mobile Responsive ===== */
+    @media (max-width: 600px) {
+      .btn, .output-buttons .btn {
+        width: 100%;
+      }
+      .actions {
+        flex-direction: column;
+      }
+    }
+
+    /* ===== Animation ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🖨️ Text Printer Tool</h1>
+
+    <input type="text" id="textInput" placeholder="Type your text here...">
+
+    <select id="repeatCount" onchange="toggleCustomInput()">
+      <option value="10">10 times</option>
+      <option value="20">20 times</option>
+      <option value="50">50 times</option>
+      <option value="100">100 times</option>
+      <option value="custom">Custom</option>
+    </select>
+
+    <input type="number" id="customCount" placeholder="Enter custom number" min="1" style="display:none;">
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="printText()">🖨️ Print</button>
+      <button class="btn btn-secondary" onclick="clearText()">🗑 Clear</button>
+    </div>
+
+    <div class="output" id="outputBox">
+      <pre id="outputText"></pre>
+    </div>
+
+    <div class="output-buttons">
+      <button class="btn btn-secondary" onclick="copyText()">📋 Copy</button>
+      <button class="btn btn-primary" onclick="downloadText()">⬇ Download</button>
+    </div>
+  </div>
+
+  <script>
+    function toggleCustomInput() {
+      const repeatSelect = document.getElementById("repeatCount").value;
+      const customInput = document.getElementById("customCount");
+      customInput.style.display = (repeatSelect === "custom") ? "block" : "none";
+    }
+
+    function printText() {
+      const text = document.getElementById("textInput").value.trim();
+      const repeatSelect = document.getElementById("repeatCount").value;
+      const customCount = parseInt(document.getElementById("customCount").value);
+      let count;
+
+      if (!text) {
+        document.getElementById("outputText").textContent = "⚠️ Please enter some text.";
+        return;
+      }
+
+      if (repeatSelect === "custom") {
+        if (!customCount || customCount < 1) {
+          document.getElementById("outputText").textContent = "⚠️ Please enter a valid custom number.";
+          return;
+        }
+        count = customCount;
+      } else {
+        count = parseInt(repeatSelect);
+      }
+
+      let result = "";
+      for (let i = 1; i <= count; i++) {
+        result += i + ". " + text + "\n";
+      }
+
+      document.getElementById("outputText").textContent = result;
+    }
+
+    function clearText() {
+      document.getElementById("textInput").value = "";
+      document.getElementById("customCount").value = "";
+      document.getElementById("outputText").textContent = "";
+      document.getElementById("repeatCount").value = "10";
+      toggleCustomInput();
+    }
+
+    function copyText() {
+      const output = document.getElementById("outputText").textContent;
+      if (!output.trim()) {
+        alert("⚠️ Nothing to copy!");
+        return;
+      }
+      navigator.clipboard.writeText(output).then(() => {
+        alert("✅ Text copied to clipboard!");
+      });
+    }
+
+    function downloadText() {
+      const output = document.getElementById("outputText").textContent;
+      if (!output.trim()) {
+        alert("⚠️ Nothing to download!");
+        return;
+      }
+      const blob = new Blob([output], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "printed-text.txt";
+      link.click();
+    }
+  </script>
+</body>
+</html>
