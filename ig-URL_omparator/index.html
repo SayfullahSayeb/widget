@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Instagram URL Comparator</title>
+  <style>
+    body { background: #f6f8fa; font-family: Sans-Serif; padding: 2em; }
+    label { font-weight: bold; color: #1565c0; }
+    textarea, button { font-size: 1em; padding: 0.5em; width: 94%; border-radius: 4px; border: 1px solid #bbb; }
+    textarea { margin: 0.5em 0 1em 0; }
+    button { background: #2196f3; color: #fff; border: none; width: auto; cursor: pointer; }
+    button:hover { background: #1565c0; }
+    table { width: 99%; margin-top: 1em; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #ddd; padding: 0.35em 0.5em; text-align:left;}
+    th { background: #2196f3; color: #fff; }
+    .keycell { font-weight: bold; color: #1565c0; }
+    .urlbox {width:48%;height:3em;}
+    .diff { background: #FFFF99; }
+    .heading {margin-bottom:0;}
+  </style>
+</head>
+<body>
+  <h2 class="heading">Instagram URL Parameter Comparator</h2>
+  <form onsubmit="return false;">
+    <label for="url1">1st Instagram Image URL:</label><br>
+    <textarea id="url1" class="urlbox" placeholder="Paste first Instagram image URL here"></textarea>
+    <label for="url2">2nd Instagram Image URL:</label><br>
+    <textarea id="url2" class="urlbox" placeholder="Paste second Instagram image URL here"></textarea><br>
+    <button id="compareBtn">Compare</button>
+  </form>
+
+  <table id="resultTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Key</th>
+        <th>Value #1</th>
+        <th>Value #2</th>
+      </tr>
+    </thead>
+    <tbody id="resultBody"></tbody>
+  </table>
+
+  <script>
+    // Change this to set key order
+    const KEY_ORDER = ["domain", "_nc_gid", "oh", "oe", "_nc_oc", "_nc_ohc", "_nc_cat", "_nc_ht"];
+
+    function parseUrlData(url) {
+      let data = {};
+      url = url.trim();
+      if (!url) return data;
+      try {
+        if (!/^https?:\/\//.test(url)) url = "https://" + url;
+        let u = new URL(url);
+        data["domain"] = u.hostname;
+        let params = new URLSearchParams(u.search);
+        for (let [k, v] of params.entries()) data[k] = v;
+        return data;
+      } catch(e) {
+        return data;
+      }
+    }
+
+    function buildComparisonTable(d1, d2, allKeys) {
+      let tbody = document.getElementById('resultBody');
+      tbody.innerHTML = "";
+
+      allKeys.forEach(key => {
+        let v1 = key in d1 ? d1[key] : "(not found)";
+        let v2 = key in d2 ? d2[key] : "(not found)";
+        let tr = document.createElement('tr');
+
+        // Highlight differences
+        let isDiff = v1 !== v2;
+        tr.innerHTML = `<td class="keycell">${key}</td>
+          <td${isDiff ? ' class="diff"' : ''}>${v1}</td>
+          <td${isDiff ? ' class="diff"' : ''}>${v2}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('compareBtn').onclick = function() {
+      let url1 = document.getElementById('url1').value;
+      let url2 = document.getElementById('url2').value;
+      let d1 = parseUrlData(url1);
+      let d2 = parseUrlData(url2);
+
+      // Combine all unique keys (preserves KEY_ORDER, then adds additional params at the end)
+      let allKeys = KEY_ORDER.slice();
+      let extras = Array.from(new Set([
+        ...Object.keys(d1), ...Object.keys(d2)
+      ])).filter(k => !allKeys.includes(k));
+      allKeys = allKeys.concat(extras);
+
+      buildComparisonTable(d1, d2, allKeys);
+      document.getElementById('resultTable').style.display = 'table';
+    };
+
+  </script>
+</body>
+</html>
